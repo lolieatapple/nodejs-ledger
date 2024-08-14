@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@ledgerhq/hw-app-eth": "^6.38.0",
+    "@ledgerhq/hw-transport-node-hid": "^6.29.3",
+    "inquirer": "^10.1.8",
+    "viem": "^2.19.4"
+  }
+}
