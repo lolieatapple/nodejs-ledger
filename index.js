@@ -17,7 +17,7 @@ async function getAddresses(transport, startIndex, endIndex) {
 
 async function selectAddress(addresses) {
   const choices = addresses.map(({ index, address }) => ({
-    name: `地址 ${index}: ${address}`,
+    name: `Address ${index}: ${address}`,
     value: addresses[index]
   }));
 
@@ -25,7 +25,7 @@ async function selectAddress(addresses) {
     {
       type: 'list',
       name: 'selectedAddress',
-      message: '请选择您想要使用的地址:',
+      message: 'Please select the address you want to use:',
       choices: choices
     }
   ]);
@@ -38,14 +38,14 @@ async function inputTransactionDetails() {
     {
       type: 'input',
       name: 'to',
-      message: '请输入接收者地址:',
-      validate: input => /^0x[a-fA-F0-9]{40}$/.test(input) || '请输入有效的以太坊地址'
+      message: 'Please enter the recipient address:',
+      validate: input => /^0x[a-fA-F0-9]{40}$/.test(input) || 'Please enter a valid Ethereum address'
     },
     {
       type: 'number',
       name: 'value',
-      message: '请输入要发送的ETH数量:',
-      validate: input => input > 0 || '请输入大于0的数值'
+      message: 'Please enter the amount of ETH to send:',
+      validate: input => input > 0 || 'Please enter a value greater than 0'
     }
   ]);
 
@@ -53,16 +53,16 @@ async function inputTransactionDetails() {
 }
 
 async function signWithLedger() {
-  console.log('正在连接到Ledger设备...');
+  console.log('Connecting to Ledger device...');
   const transport = await TransportNodeHid.create();
   const eth = new Eth(transport);
   
   try {
-    console.log('正在获取地址列表...');
+    console.log('Getting address list...');
     const addresses = await getAddresses(transport, 0, 4);
     
     const selectedAddress = await selectAddress(addresses);
-    console.log('选择的地址:', selectedAddress.address);
+    console.log('Selected address:', selectedAddress.address);
 
     const publicClient = createPublicClient({
       chain: mainnet,
@@ -71,7 +71,7 @@ async function signWithLedger() {
 
     const { to, value } = await inputTransactionDetails();
 
-    console.log('正在准备交易...');
+    console.log('Preparing transaction...');
     const nonce = await publicClient.getTransactionCount({ address: selectedAddress.address });
     const gasPrice = await publicClient.getGasPrice();
     const chainId = await publicClient.getChainId();
@@ -87,7 +87,7 @@ async function signWithLedger() {
 
     const unsignedTx = serializeTransaction(transaction);
     
-    console.log('请在Ledger设备上确认交易...');
+    console.log('Please confirm the transaction on your Ledger device...');
     const signature = await eth.signTransaction(selectedAddress.path, unsignedTx.slice(2));
     
     const signedTransaction = serializeTransaction(transaction, {
@@ -96,29 +96,29 @@ async function signWithLedger() {
       v: BigInt(signature.v)
     });
 
-    console.log('交易已签名');
-    console.log('签名后的交易:', signedTransaction);
+    console.log('Transaction signed');
+    console.log('Signed transaction:', signedTransaction);
 
     const { confirmSend } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'confirmSend',
-        message: '是否发送这笔交易?',
+        message: 'Do you want to send this transaction?',
         default: false
       }
     ]);
 
     if (confirmSend) {
       const txHash = await publicClient.sendRawTransaction({ serializedTransaction: signedTransaction });
-      console.log('交易已发送，交易哈希:', txHash);
+      console.log('Transaction sent, transaction hash:', txHash);
     } else {
-      console.log('交易未发送');
+      console.log('Transaction not sent');
     }
   } catch (error) {
-    console.error('过程中出错:', error);
+    console.error('An error occurred during the process:', error);
   } finally {
     await transport.close();
-    console.log('与Ledger设备的连接已关闭');
+    console.log('Connection to Ledger device closed');
   }
 }
 
